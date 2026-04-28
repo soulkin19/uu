@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全球種ガチ解説 | プロ級投げ方完全マニュアル</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --baseball-green: #00c853;
+        }
+        
+        body {
+            font-family: 'Noto Sans JP', system-ui, sans-serif;
+        }
+        
+        .hero-bg {
+            background: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://picsum.photos/id/1015/2000/1200') center/cover no-repeat;
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: #00c853;
+            transform: translateY(-2px);
+        }
+        
+        .pitch-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .pitch-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgb(0 200 83);
+        }
+        
+        .section-header {
+            position: relative;
+        }
+        
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 80px;
+            height: 4px;
+            background: #00c853;
+            border-radius: 9999px;
+        }
+        
+        .ball {
+            animation: spin 4s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+    <!-- Navbar -->
+    <nav class="bg-black border-b border-zinc-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-[#00c853] rounded-2xl flex items-center justify-center text-3xl ball">⚾</div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tighter">全球種<span class="text-[#00c853]">ガチ</span>解説</h1>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+                <a href="#home" class="nav-link">ホーム</a>
+                <a href="#pitches" class="nav-link">球種一覧</a>
+                <a href="#basic" class="nav-link">基本投球フォーム</a>
+                <a href="#tips" class="nav-link">ガチTips</a>
+                <a href="#caution" class="nav-link">注意点・怪我予防</a>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <div class="px-4 py-2 bg-[#00c853] text-black font-bold rounded-xl text-sm flex items-center gap-2 hover:bg-white transition-colors">
+                    <i class="fa-solid fa-baseball-bat-ball"></i>
+                    <span>練習開始</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header id="home" class="hero-bg h-screen flex items-center">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md text-white text-sm font-medium px-6 py-3 rounded-3xl mb-6">
+                <div class="w-3 h-3 bg-[#00c853] rounded-full animate-pulse"></div>
+                本気でマスターしたい投手へ
+            </div>
+            <h1 class="text-6xl md:text-7xl font-black tracking-tighter leading-none mb-6">
+                全球種の<br>投げ方を<br><span class="text-[#00c853]">ガチで</span>解説
+            </h1>
+            <p class="text-xl md:text-2xl max-w-2xl mx-auto text-zinc-300 mb-10">
+                フォーシームからナックルまで。<br>握り方・投げ方・コツ・注意点をプロ並みに徹底解説。
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#pitches" class="px-10 py-5 bg-[#00c853] hover:bg-[#00e65c] text-black font-bold text-xl rounded-2xl flex items-center justify-center gap-3 transition-all">
+                    <i class="fa-solid fa-list"></i>
+                    全球種を今すぐ見る
+                </a>
+                <button onclick="document.getElementById('basic').scrollIntoView({behavior:'smooth'})" 
+                        class="px-10 py-5 border-2 border-white/70 hover:border-white font-medium text-xl rounded-2xl flex items-center justify-center gap-3 transition-all">
+                    基本フォームから始める
+                </button>
+            </div>
+            <div class="mt-16 text-zinc-400 text-sm flex items-center justify-center gap-8">
+                <div><i class="fa-solid fa-check"></i> 握り方完全解説</div>
+                <div><i class="fa-solid fa-check"></i> リリースのコツ</div>
+                <div><i class="fa-solid fa-check"></i> 実戦的な使い方</div>
+                <div><i class="fa-solid fa-check"></i> 怪我を防ぐポイント</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 球種一覧 -->
+    <section id="pitches" class="max-w-7xl mx-auto px-6 py-20">
+        <div class="text-center mb-12">
+            <span class="text-[#00c853] font-bold tracking-widest">PITCH REPERTOIRE</span>
+            <h2 class="text-5xl font-black tracking-tighter mt-2">全球種ガチ解説</h2>
+            <p class="text-zinc-400 mt-3">クリックで詳細を開きます（各球種の握り方・投げ方・特徴を徹底解説）</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="pitch-grid">
+            <!-- JSでカードを生成 -->
+        </div>
+    </section>
+
+    <!-- 詳細セクション（アコーディオン形式） -->
+    <div class="max-w-7xl mx-auto px-6 pb-20">
+        <div id="pitch-details" class="space-y-8"></div>
+    </div>
+
+    <!-- 基本投球フォーム -->
+    <section id="basic" class="bg-black py-20 border-t border-b border-zinc-800">
+        <div class="max-w-7xl mx-auto px-6">
+            <h2 class="text-4xl font-black tracking-tighter mb-8 section-header">基本投球フォームのガチ解説</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-[#00c853]">1. セットポジションの鉄則</h3>
+                    <ul class="space-y-4 text-zinc-300">
+                        <li class="flex gap-3"><i class="fa-solid fa-circle-check text-[#00c853] mt-1"></i> 軸足に体重をしっかり乗せる（体重移動の起点）</li>
+                        <li class="flex gap-3"><i class="fa-solid fa-circle-check text-[#00c853] mt-1"></i> グラブは胸の前で固定（バランスを取る）</li>
+                        <li class="flex gap-3"><i class="fa-solid fa-circle-check text-[#00c853] mt-1"></i> 肩のラインは本塁に向ける</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-bold mb-4 text-[#00c853]">2. リリースポイントの共通点</h3>
+                    <p class="text-zinc-300 leading-relaxed">
+                        どの球種でも「同じフォーム・同じ腕の振り」で投げるのが上級者の条件。<br>
+                        腕の振りは「鞭」のようにしならせて、指先でボールを「押し出す」イメージ。
+                    </p>
+                    <div class="mt-8 bg-zinc-900 rounded-3xl p-6">
+                        <p class="font-medium">共通の注意点：</p>
+                        <p class="text-sm text-zinc-400">肘が高く上がりすぎると肩を痛めやすい。肩のラインを意識してコンパクトに。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ガチTips -->
+    <section id="tips" class="max-w-7xl mx-auto px-6 py-20">
+        <h2 class="text-4xl font-black tracking-tighter mb-12 section-header">ガチ上達Tips</h2>
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-zinc-900 rounded-3xl p-8">
+                <i class="fa-solid fa-hand-fist text-4xl text-[#00c853] mb-6"></i>
+                <h3 class="text-xl font-bold mb-3">握りの微調整が命</h3>
+                <p class="text-zinc-400">指1mmのずれで変化量が激変。鏡の前で何度も確認せよ。</p>
+            </div>
+            <div class="bg-zinc-900 rounded-3xl p-8">
+                <i class="fa-solid fa-chart-line text-4xl text-[#00c853] mb-6"></i>
+                <h3 class="text-xl font-bold mb-3">球速差を武器に</h3>
+                <p class="text-zinc-400">ストレートと変化球の球速差を10km/h以上作ると打者のタイミングが狂う。</p>
+            </div>
+            <div class="bg-zinc-900 rounded-3xl p-8">
+                <i class="fa-solid fa-shield-halved text-4xl text-[#00c853] mb-6"></i>
+                <h3 class="text-xl font-bold mb-3">同じフォームを死守</h3>
+                <p class="text-zinc-400">球種を読まれないために、すべての球種で腕の振り・リリース高さを統一。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 注意点 -->
+    <section id="caution" class="bg-zinc-900 py-20">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="bg-red-950/50 border border-red-900 rounded-3xl p-10 max-w-3xl mx-auto text-center">
+                <i class="fa-solid fa-triangle-exclamation text-5xl text-red-500 mb-6"></i>
+                <h2 class="text-3xl font-black mb-4">必ず守ってほしいこと</h2>
+                <ul class="text-left max-w-md mx-auto space-y-6 text-lg">
+                    <li class="flex items-start gap-4"><span class="text-red-400 font-bold text-2xl">01</span> 無理な変化球練習は絶対禁止（特に成長期）</li>
+                    <li class="flex items-start gap-4"><span class="text-red-400 font-bold text-2xl">02</span> 毎日100球以上投げ込まない（肩・肘の負担）</li>
+                    <li class="flex items-start gap-4"><span class="text-red-400 font-bold text-2xl">03</span> フォームが崩れたら即ストップ。動画で自分の投球を確認</li>
+                    <li class="flex items-start gap-4"><span class="text-red-400 font-bold text-2xl">04</span> 痛みを感じたらすぐに休養＋専門医受診</li>
+                </ul>
+                <p class="mt-10 text-zinc-400">このサイトは解説目的です。実際の練習は必ず指導者のもとで行ってください。</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-black py-12 border-t border-zinc-800">
+        <div class="max-w-7xl mx-auto px-6 text-center text-zinc-500 text-sm">
+            © 2026 全球種ガチ解説サイト - 単独HTMLファイルで作成<br>
+            投手人生を本気で変えたい人のために。
+        </div>
+    </footer>
+
+    <script>
+        // Tailwind 初期化
+        function initTailwind() {
+            tailwind.config = {
+                content: [],
+                theme: {
+                    extend: {}
+                }
+            }
+        }
+
+        // 球種データ（ガチ解説用）
+        const pitches = [
+            {
+                id: 1,
+                name: "フォーシーム・ファストボール",
+                type: "速球系",
+                color: "emerald",
+                grip: "人差し指・中指を縫い目に跨がせて置く（4つの縫い目が見える握り）。親指は下で支える。",
+                throw: "ストレートにバックスピンを強くかける。指先で押し出すイメージ。腕の振りは最速を意識。",
+                feature: "真っ直ぐに最速で飛ぶ。揚力で浮き上がって見える。",
+                tips: "指の第一関節でしっかり押す。リリース時に指を素早く離す。"
+            },
+            {
+                id: 2,
+                name: "ツーシーム・ファストボール",
+                type: "速球系",
+                color: "teal",
+                grip: "人差し指と中指を縫い目に沿って置く（2つの縫い目）。ストレートよりやや深めに。",
+                throw: "ストレートと同じフォーム。自然に沈みながら走る。",
+                feature: "右打者のインコースに食い込む（右投手の場合）。ゴロを誘いやすい。",
+                tips: "指の圧力を少し変えるだけで変化量が変わる。微調整が命。"
+            },
+            {
+                id: 3,
+                name: "カットボール",
+                type: "横変化",
+                color: "cyan",
+                grip: "フォーシームの握りから人差し指を少し中指側にずらす。",
+                throw: "ストレートと同じ腕の振り。手首を軽く返してカット。",
+                feature: "微妙にグラブ側に切れる。打者のバットに詰まらせる。",
+                tips: "変化を大きくしすぎないのが上級者。"
+            },
+            {
+                id: 4,
+                name: "スライダー",
+                type: "横変化",
+                color: "blue",
+                grip: "人差し指と中指を縫い目に沿わせ、親指を少し外側に。",
+                throw: "手首を外側に切るイメージ（時計回り）。",
+                feature: "横に大きく曲がる。空振りを取る決め球に最適。",
+                tips: "肘を痛めやすいので、肩の開きを抑える。"
+            },
+            {
+                id: 5,
+                name: "カーブボール",
+                type: "縦変化",
+                color: "violet",
+                grip: "人差し指と中指を縫い目にかけ、手のひらをボールに密着させる。",
+                throw: "大きく腕を振ってトップから落とす。縦回転を強く。",
+                feature: "大きく縦に落ちる山なりの軌道。",
+                tips: "手首を固めて投げるとスピードが落ちて効果的。"
+            },
+            {
+                id: 6,
+                name: "フォークボール / スプリット",
+                type: "縦変化",
+                color: "amber",
+                grip: "人差し指と中指を大きく開いてボールを挟む（深く握る）。",
+                throw: "ストレートと同じフォームで指の間からボールを抜く。",
+                feature: "ストレートと同じ軌道から急激に縦に落ちる。",
+                tips: "深く握るほど落差が大きくなる。"
+            },
+            {
+                id: 7,
+                name: "チェンジアップ",
+                type: "緩急",
+                color: "orange",
+                grip: "ボールを深く包み込む（サークルチェンジ推奨）。",
+                throw: "ストレートと同じ腕の振りで指を抜くように。",
+                feature: "球速を10km/h以上落としてタイミングを外す。",
+                tips: "腕の振りは絶対に緩めない。"
+            },
+            {
+                id: 8,
+                name: "シンカー / シュート",
+                type: "横+沈み",
+                color: "rose",
+                grip: "ツーシームに近いが、指の圧力を内側に。",
+                throw: "内側から押し出すイメージ。",
+                feature: "利き手側に沈みながら曲がる。",
+                tips: "サイド気味のフォームで変化が大きくなる。"
+            }
+        ]
+
+        // カード生成
+        function createPitchCards() {
+            const grid = document.getElementById('pitch-grid')
+            let html = ''
+            
+            pitches.forEach(pitch => {
+                html += `
+                <div onclick="showPitchDetail(${pitch.id})" class="pitch-card cursor-pointer bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 rounded-3xl p-6">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="px-4 py-1 bg-${pitch.color}-500/10 text-${pitch.color}-400 text-xs font-bold rounded-2xl">${pitch.type}</div>
+                        <span class="text-4xl">⚾</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">${pitch.name}</h3>
+                    <p class="text-zinc-400 text-sm line-clamp-3">${pitch.feature}</p>
+                    <div class="mt-8 flex justify-end">
+                        <span class="text-[#00c853] text-sm font-medium flex items-center gap-1">
+                            詳細を見る <i class="fa-solid fa-arrow-right"></i>
+                        </span>
+                    </div>
+                </div>`
+            })
+            grid.innerHTML = html
+        }
+
+        // 詳細表示
+        function showPitchDetail(id) {
+            const pitch = pitches.find(p => p.id === id)
+            if (!pitch) return
+            
+            const detailsContainer = document.getElementById('pitch-details')
+            
+            let detailHTML = `
+            <div class="bg-zinc-900 rounded-3xl p-10 border border-zinc-700 scroll-mt-20" id="detail-${pitch.id}">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <span class="px-4 py-1 bg-emerald-500/10 text-emerald-400 text-sm font-bold rounded-2xl">${pitch.type}</span>
+                        <h2 class="text-4xl font-black mt-3">${pitch.name}</h2>
+                    </div>
+                    <button onclick="this.closest('.bg-zinc-900').remove()" class="text-zinc-400 hover:text-white text-3xl">×</button>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-10">
+                    <div>
+                        <h4 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fa-solid fa-hand"></i> 握り方</h4>
+                        <div class="bg-black rounded-2xl p-6 text-zinc-300 leading-relaxed">
+                            ${pitch.grip}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg mb-3 flex items-center gap-2"><i class="fa-solid fa-rocket"></i> 投げ方</h4>
+                        <div class="bg-black rounded-2xl p-6 text-zinc-300 leading-relaxed">
+                            ${pitch.throw}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h4 class="font-bold text-lg mb-3">特徴</h4>
+                    <p class="text-zinc-300">${pitch.feature}</p>
+                </div>
+                
+                <div class="mt-8 bg-emerald-900/30 border border-emerald-700 rounded-2xl p-6">
+                    <h4 class="font-bold text-lg mb-3 text-emerald-400">ガチ上達のコツ</h4>
+                    <p class="text-emerald-100">${pitch.tips}</p>
+                </div>
+            </div>`
+            
+            detailsContainer.innerHTML += detailHTML
+            document.getElementById(`detail-${pitch.id}`).scrollIntoView({ behavior: "smooth" })
+        }
+
+        // 初期化
+        window.onload = function() {
+            initTailwind()
+            createPitchCards()
+            
+            console.log('%c全球種ガチ解説サイト 正常にロードされました！', 'color:#00c853; font-size:18px; font-weight:bold')
+        }
+    </script>
+</body>
+</html>
