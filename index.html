@@ -2,184 +2,282 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>プロスピ風 球種マップ作成</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D FPS - Achex Multiplayer</title>
     <style>
-        :root {
-            --bg-color: #222;
-            --panel-bg: rgba(40, 40, 40, 0.9);
-            --text-color: #fff;
-            --border-color: #555;
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #222; font-family: sans-serif; }
+        
+        /* ロビー画面のUI */
+        #lobby {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            background: rgba(0, 0, 0, 0.8); color: white; z-index: 10;
         }
+        #lobby input { padding: 10px; font-size: 18px; margin-bottom: 20px; text-align: center; }
+        #lobby button { padding: 15px 30px; font-size: 18px; margin: 10px; cursor: pointer; border: none; border-radius: 5px; }
+        #btn-pc { background-color: #4CAF50; color: white; }
+        #btn-ipad { background-color: #2196F3; color: white; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'sans-serif';
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+        /* ゲーム画面のUI */
+        #game-ui { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #crosshair {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 10px; height: 10px; background: white; border-radius: 50%; opacity: 0.8;
         }
-
-        /* チャートエリア */
-        .chart-viewport {
-            position: relative;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, #444 0%, #111 100%);
-            border: 2px solid #000;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        #joystick-zone {
+            position: absolute; bottom: 10%; left: 10%; width: 150px; height: 150px;
+            pointer-events: auto; /* ジョイスティック操作用 */
         }
-
-        /* 中央のボール */
-        .center-ball {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            background: #fff;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 10;
-            border: 2px solid #333;
-            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 20px;
-        }
-
-        /* 変化の矢印とゲージのコンテナ */
-        .pitch-line {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: 0 50%;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        /* ゲージのドット */
-        .dot {
-            width: 8px;
-            height: 12px;
-            margin-right: 2px;
-            background: #444; /* デフォルト（未変化） */
-            border: 1px solid #000;
-        }
-
-        /* ランクに応じた色（例：Dはオレンジ、Fは青など） */
-        .dot.active { background: #ff9933; box-shadow: 0 0 5px #ff9933; }
-        .dot.active.blue { background: #3399ff; box-shadow: 0 0 5px #3399ff; }
-
-        /* ラベル（球種名と速度） */
-        .pitch-label {
-            position: absolute;
-            background: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            text-align: center;
-            min-width: 80px;
-            z-index: 20;
-        }
-
-        .pitch-name { font-weight: bold; font-size: 14px; display: block; }
-        .pitch-speed { font-size: 12px; color: #ddd; }
-
-        /* 入力フォーム */
-        .controls {
-            margin-top: 20px;
-            background: #333;
-            padding: 15px;
-            border-radius: 8px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        input, select, button {
-            padding: 5px;
-            border-radius: 4px;
-            border: none;
-        }
-
-        button {
-            background: #ffcc00;
-            font-weight: bold;
-            cursor: pointer;
-            grid-column: span 2;
+        #touch-look-zone {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            pointer-events: auto; /* 視点移動用 */
         }
     </style>
+    <!-- Three.js と Nipple.js (ジョイスティック用) の読み込み -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
 </head>
 <body>
 
-    <div class="chart-viewport" id="viewport">
-        <div class="center-ball">⚾</div>
+    <!-- ロビー画面 -->
+    <div id="lobby">
+        <h2>Achex 3D FPS</h2>
+        <input type="text" id="playerName" placeholder="プレイヤー名を入力" value="Player1">
+        <div>
+            <button id="btn-pc">PCで開始 (WASD + マウス)</button>
+            <button id="btn-ipad">iPadで開始 (ジョイスティック)</button>
         </div>
+    </div>
 
-    <div class="controls">
-        <input type="text" id="p-name" placeholder="球種名（例：カットボール）">
-        <input type="number" id="p-speed" placeholder="球速 (km/h)">
-        <select id="p-angle">
-            <option value="0">右（シュート系）</option>
-            <option value="45">右下（シンカー系）</option>
-            <option value="90">下（フォーク系）</option>
-            <option value="135">左下（カーブ系）</option>
-            <option value="180">左（スライダー系）</option>
-            <option value="270">上（ライズ系）</option>
-        </select>
-        <select id="p-level">
-            <option value="3">変化量：小</option>
-            <option value="5">変化量：中</option>
-            <option value="8">変化量：大</option>
-        </select>
-        <button onclick="addPitch()">球種を追加</button>
+    <!-- ゲームUI -->
+    <div id="game-ui">
+        <div id="crosshair"></div>
+        <div id="joystick-zone" style="display: none;"></div>
+        <div id="touch-look-zone" style="display: none;"></div>
     </div>
 
     <script>
-        function addPitch() {
-            const name = document.getElementById('p-name').value;
-            const speed = document.getElementById('p-speed').value;
-            const angle = document.getElementById('p-angle').value;
-            const level = document.getElementById('p-level').value;
-            const viewport = document.getElementById('viewport');
+        // --- 基本設定 ---
+        const HUB_NAME = "my_custom_fps_hub_2026"; // Achexのハブ名（他の人と被らないように）
+        let ws;
+        let myName = "";
+        let controlMode = "pc"; 
+        
+        let scene, camera, renderer;
+        let otherPlayers = {}; // 他プレイヤーの3Dモデルを格納
+        
+        // 移動用変数
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
+        let joystickVector = { x: 0, y: 0 };
+        const speed = 0.15;
 
-            if(!name) return;
+        // --- ロビーのイベントリスナー ---
+        document.getElementById('btn-pc').addEventListener('click', () => startGame('pc'));
+        document.getElementById('btn-ipad').addEventListener('click', () => startGame('ipad'));
 
-            // コンテナ作成
-            const line = document.createElement('div');
-            line.className = 'pitch-line';
-            line.style.transform = `rotate(${angle}deg) translate(25px, -50%)`;
+        function startGame(mode) {
+            myName = document.getElementById('playerName').value || "Player_" + Math.floor(Math.random() * 1000);
+            controlMode = mode;
+            
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
 
-            // ゲージ（ドット）の生成
-            for (let i = 0; i < 10; i++) {
-                const dot = document.createElement('div');
-                dot.className = i < level ? 'dot active' : 'dot';
-                // 角度が135度付近（カーブ系）なら青色にする遊び心
-                if(angle == 135 && i < level) dot.classList.add('blue');
-                line.appendChild(dot);
+            init3D();
+            initControls();
+            connectAchex();
+            animate();
+        }
+
+        // --- Three.js の初期化 ---
+        function init3D() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // 空の色
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 0); // プレイヤーの目の高さ
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // 光源
+            const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+            light.position.set(0, 20, 0);
+            scene.add(light);
+
+            // 地面
+            const floorGeo = new THREE.PlaneGeometry(100, 100);
+            const floorMat = new THREE.MeshBasicMaterial({ color: 0x556B2F, side: THREE.DoubleSide });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = Math.PI / 2;
+            scene.add(floor);
+
+            // リサイズ対応
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        // --- 操作系の初期化 (PC / iPad 分岐) ---
+        function initControls() {
+            if (controlMode === 'pc') {
+                // PC: PointerLock (マウスを画面内にロック) と WASD
+                renderer.domElement.addEventListener('click', () => {
+                    document.body.requestPointerLock();
+                });
+
+                document.body.addEventListener('mousemove', (e) => {
+                    if (document.pointerLockElement === document.body) {
+                        camera.rotation.y -= e.movementX * 0.002;
+                        camera.rotation.x -= e.movementY * 0.002;
+                        camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.code === 'KeyW') moveForward = true;
+                    if (e.code === 'KeyS') moveBackward = true;
+                    if (e.code === 'KeyA') moveLeft = true;
+                    if (e.code === 'KeyD') moveRight = true;
+                });
+                document.addEventListener('keyup', (e) => {
+                    if (e.code === 'KeyW') moveForward = false;
+                    if (e.code === 'KeyS') moveBackward = false;
+                    if (e.code === 'KeyA') moveLeft = false;
+                    if (e.code === 'KeyD') moveRight = false;
+                });
+
+            } else if (controlMode === 'ipad') {
+                // iPad: Nipple.js ジョイスティック と 画面右側タッチでの視点移動
+                const joyZone = document.getElementById('joystick-zone');
+                const touchLookZone = document.getElementById('touch-look-zone');
+                joyZone.style.display = 'block';
+                touchLookZone.style.display = 'block';
+
+                // 左側のジョイスティック
+                const manager = nipplejs.create({
+                    zone: joyZone,
+                    mode: 'static',
+                    position: { left: '50%', top: '50%' },
+                    color: 'white'
+                });
+
+                manager.on('move', (evt, data) => {
+                    const angle = data.angle.radian;
+                    const force = Math.min(data.force, 1);
+                    // Three.jsの座標系に合わせてXとZのベクトルを計算
+                    joystickVector.x = Math.cos(angle) * force;
+                    joystickVector.y = Math.sin(angle) * force;
+                });
+
+                manager.on('end', () => {
+                    joystickVector = { x: 0, y: 0 };
+                });
+
+                // 右側の視点操作（相対的な移動量を取得してワープを防ぐ）
+                let previousTouch = null;
+                touchLookZone.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const touch = e.touches[0];
+                    if (previousTouch) {
+                        const movementX = touch.pageX - previousTouch.x;
+                        const movementY = touch.pageY - previousTouch.y;
+                        camera.rotation.y -= movementX * 0.005;
+                        camera.rotation.x -= movementY * 0.005;
+                        camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                    }
+                    previousTouch = { x: touch.pageX, y: touch.pageY };
+                });
+                touchLookZone.addEventListener('touchend', () => { previousTouch = null; });
+            }
+        }
+
+        // --- Achex サーバーへの接続と同期 ---
+        function connectAchex() {
+            ws = new WebSocket("wss://achex.ca:4010");
+            
+            ws.onopen = () => {
+                console.log("Achex Server Connected!");
+                // ハブに参加
+                ws.send(JSON.stringify({ auth: myName, hub: HUB_NAME }));
+                
+                // 定期的に自分の位置をハブ全体に送信 (毎秒20回)
+                setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        const posData = {
+                            x: camera.position.x,
+                            y: camera.position.y,
+                            z: camera.position.z,
+                            ry: camera.rotation.y
+                        };
+                        ws.send(JSON.stringify({ to: HUB_NAME, text: JSON.stringify(posData) }));
+                    }
+                }, 50);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    // 自分以外のプレイヤーからのメッセージを受信
+                    if (msg.from && msg.text && msg.from !== myName) {
+                        const data = JSON.parse(msg.text);
+                        updateOtherPlayer(msg.from, data);
+                    }
+                } catch(e) {}
+            };
+        }
+
+        // 他のプレイヤーのモデルを更新（存在しなければ赤い箱として作成）
+        function updateOtherPlayer(id, data) {
+            if (!otherPlayers[id]) {
+                const geo = new THREE.BoxGeometry(1, 1.8, 1);
+                const mat = new THREE.MeshBasicMaterial({ color: 0xff0000 }); // 敵は赤色
+                const mesh = new THREE.Mesh(geo, mat);
+                scene.add(mesh);
+                otherPlayers[id] = mesh;
+            }
+            // 位置と向きを同期
+            otherPlayers[id].position.set(data.x, data.y - 0.9, data.z); // カメラ位置から足元へ調整
+            otherPlayers[id].rotation.y = data.ry;
+        }
+
+        // --- メインループ ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // プレイヤーの移動処理
+            direction.set(0, 0, 0);
+
+            if (controlMode === 'pc') {
+                if (moveForward) direction.z = -1;
+                if (moveBackward) direction.z = 1;
+                if (moveLeft) direction.x = -1;
+                if (moveRight) direction.x = 1;
+            } else if (controlMode === 'ipad') {
+                direction.x = joystickVector.x;
+                direction.z = -joystickVector.y; // Y軸上向きをZ軸前方に変換
             }
 
-            // ラベルの配置計算
-            const label = document.createElement('div');
-            label.className = 'pitch-label';
-            const radius = 100 + (level * 5); // 変化量に応じて外側に配置
-            const rad = (angle * Math.PI) / 180;
-            const x = 200 + Math.cos(rad) * radius - 50;
-            const y = 200 + Math.sin(rad) * radius - 20;
+            direction.normalize();
 
-            label.style.left = `${x}px`;
-            label.style.top = `${y}px`;
-            label.innerHTML = `<span class="pitch-name">${name}</span><span class="pitch-speed">${speed} km/h</span>`;
+            // カメラの向いている方向を基準に移動ベクトルを計算
+            if (direction.lengthSq() > 0) {
+                const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+                forward.y = 0; forward.normalize();
+                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+                right.y = 0; right.normalize();
 
-            viewport.appendChild(line);
-            viewport.appendChild(label);
+                velocity.copy(forward).multiplyScalar(-direction.z * speed)
+                        .add(right.multiplyScalar(direction.x * speed));
+
+                camera.position.add(velocity);
+            }
+
+            renderer.render(scene, camera);
         }
     </script>
 </body>
