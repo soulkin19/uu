@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>超本格プロ野球スピリッツ PvE Engine</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            touch-action: none;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        /* UIレイヤー */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+        }
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .scoreboard {
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid #444;
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: #fff;
+            min-width: 180px;
+        }
+        .scoreboard-title {
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .count-display {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            margin-top: 5px;
+        }
+        .count-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .count-label { width: 15px; }
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #222;
+            border: 1px solid #555;
+        }
+        .dot.b { background: #222; }
+        .dot.s { background: #222; }
+        .dot.o { background: #222; }
+        .dot.b.active { background: #00ff00; box-shadow: 0 0 8px #00ff00; }
+        .dot.s.active { background: #ffff00; box-shadow: 0 0 8px #ffff00; }
+        .dot.o.active { background: #ff0000; box-shadow: 0 0 8px #ff0000; }
+
+        .pitch-analyser {
+            background: rgba(0, 0, 0, 0.75);
+            border: 2px solid #444;
+            border-radius: 6px;
+            padding: 10px 15px;
+            color: #fff;
+            text-align: right;
+            min-width: 200px;
+        }
+        #pitch-type {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+        #pitch-speed {
+            font-size: 16px;
+            color: #ddd;
+        }
+
+        /* 中央のアナウンス */
+        #center-notice {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffff00;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(0,0,0,0.8), 0 0 10px #ff6600;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+            z-index: 20;
+        }
+
+        /* 操作用オーバーレイ（スマホ・iPad向け） */
+        #touch-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            z-index: 15;
+            display: flex;
+            pointer-events: auto;
+        }
+        .control-zone-left {
+            width: 50%;
+            height: 100%;
+            position: relative;
+            /* 左側：ドラッグでミートカーソル移動 */
+        }
+        .control-zone-right {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 30px;
+            /* 右側：タップでスイング */
+        }
+        #swing-button {
+            width: 110px;
+            height: 110px;
+            background: linear-gradient(135deg, #ff3366, #cc0033);
+            border: 3px solid #fff;
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            active {
+                transform: scale(0.92);
+            }
+        }
+        
+        .desktop-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.6);
+            font-size: 12px;
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        /* 投球コース表示（デバッグ・補正用） */
+        #strike-zone-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 160px;
+            height: 200px;
+            border: 2px dashed rgba(255,255,255,0.2);
+            pointer-events: none;
+            display: none; /* ゲーム内3Dオブジェクトとして表現するため通常は非表示 */
+        }
+    </style>
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="hud-top">
+            <div class="scoreboard">
+                <div class="scoreboard-title">PvE MATCH</div>
+                <div class="score-row">
+                    <span>CPU</span><span id="cpu-score">0</span>
+                </div>
+                <div class="score-row">
+                    <span>YOU</span><span id="user-score">0</span>
+                </div>
+                <div class="count-display">
+                    <div class="count-row"><span class="count-label">B</span><div class="dot b" id="b1"></div><div class="dot b" id="b2"></div><div class="dot b" id="b3"></div></div>
+                    <div class="count-row"><span class="count-label">S</span><div class="dot s" id="s1"></div><div class="dot s" id="s2"></div></div>
+                    <div class="count-row"><span class="count-label">O</span><div class="dot o" id="o1"></div><div class="dot o" id="o2"></div></div>
+                </div>
+            </div>
+
+            <div class="pitch-analyser">
+                <div class="scoreboard-title">PITCH INFO</div>
+                <div id="pitch-type">待機中</div>
+                <div id="pitch-speed">- km/h</div>
+            </div>
+        </div>
+
+        <div class="desktop-hint">PC: [W][A][S][D] カーソル移動 / [SPACE] スイング | スマホ・iPad: 左画面ドラッグで移動 / 右ボタンタップでスイング</div>
+    </div>
+
+    <div id="center-notice">PLAY BALL</div>
+
+    <div id="touch-controls">
+        <div class="control-zone-left" id="touch-move-zone"></div>
+        <div class="control-zone-right">
+            <div id="swing-button">スイング</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. ゲーム状態・定数設定 ---
+        const PITCH_DISTANCE = 18.44; // マウンドからホームベース(m)
+        let ball = {
+            pos: new THREE.Vector3(),
+            vel: new THREE.Vector3(),
+            acc: new THREE.Vector3(),
+            active: false,
+            type: 'ストレート',
+            speedKmh: 0,
+            hasBroken: false // 変化を既に開始したか
+        };
+
+        let gameStatus = {
+            strikes: 0,
+            balls: 0,
+            outs: 0,
+            userScore: 0,
+            cpuScore: 0,
+            state: 'WAITING' // WAITING, PITCHING, HIT_FLIGHT, RESULT
+        };
+
+        // ミートカーソル座標（-1.0 〜 1.0 内で制御）
+        let cursorTargetX = 0;
+        let cursorTargetY = 0;
+        let cursorCurrentX = 0;
+        let cursorCurrentY = 0;
+
+        // --- 2. Three.js 空間構築 (Phase 1) ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // 背景空の色
+        scene.background = new THREE.Color(0x0a1128);
+        scene.fog = new THREE.FogExp2(0x0a1128, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // プロスピ風バッター後方視点に微調整
+        camera.position.set(0, 1.3, 2.8);
+        camera.lookAt(0, 1.0, -PITCH_DISTANCE);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
+
+        // ライティング
+        const amtLight = new THREE.AmbientLight(0x555555);
+        scene.add(amtLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 15, 5);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // グラウンド・スタジアム
+        const groundGeo = new THREE.PlaneGeometry(100, 100);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x1e3f20, roughness: 0.8 });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // ホームベース
+        const homeBaseGeo = new THREE.ConeGeometry(0.3, 0.01, 5);
+        const homeBaseMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5 });
+        const homeBase = new THREE.Mesh(homeBaseGeo, homeBaseMat);
+        homeBase.rotation.y = Math.PI / 5; 
+        homeBase.position.set(0, 0.005, 0);
+        scene.add(homeBase);
+
+        // ストライクゾーン枠の3D表示（バッター視点での目安）
+        const zoneWidth = 0.52;
+        const zoneHeight = 0.65;
+        const zoneBottom = 0.5;
+        const zoneGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(zoneWidth, zoneHeight, 0.01));
+        const zoneMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2, transparent: true, opacity: 0.4 });
+        const strikeZoneMesh = new THREE.LineSegments(zoneGeo, zoneMat);
+        strikeZoneMesh.position.set(0, zoneBottom + zoneHeight/2, -0.3); // ホームベースの少し前
+        scene.add(strikeZoneMesh);
+
+        // ピッチャーマウンド
+        const moundGeo = new THREE.CylinderGeometry(1.5, 2, 0.2, 32);
+        const moundMat = new THREE.MeshStandardMaterial({ color: 0x5c4033, roughness: 0.9 });
+        const mound = new THREE.Mesh(moundGeo, moundMat);
+        mound.position.set(0, 0.01, -PITCH_DISTANCE);
+        scene.add(mound);
+
+        // 3Dボールオブジェクト
+        const ballGeo = new THREE.SphereGeometry(0.037, 32, 32); // リアルな野球ボール比率(直径約7.4cm)
+        const ballMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.3 });
+        const ballMesh = new THREE.Mesh(ballGeo, ballMat);
+        ballMesh.castShadow = true;
+        scene.add(ballMesh);
+        ballMesh.visible = false;
+
+        // 3Dミートカーソル (Phase 2)
+        const cursorRadius = 0.07;
+        const cursorGeo = new THREE.RingGeometry(cursorRadius - 0.008, cursorRadius, 32);
+        const cursorMat = new THREE.MeshBasicMaterial({ color: 0xffff00, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const cursorMesh = new THREE.Mesh(cursorGeo, cursorMat);
+        cursorMesh.position.set(0, 0.825, -0.28); // ストライクゾーンの平面に合わせる
+        scene.add(cursorMesh);
+
+        // バット表現（簡易スイングアニメーション用）
+        const batGeo = new THREE.CylinderGeometry(0.025, 0.015, 1.0, 16);
+        const batMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.4 });
+        const batMesh = new THREE.Mesh(batGeo, batMat);
+        batMesh.rotation.z = Math.PI / 3;
+        batMesh.position.set(0.8, 0.6, 0.2);
+        scene.add(batMesh);
+
+        // --- 3. CPU配球AI & 変化球物理 (Phase 3 & 4) ---
+        // 体感球速を下げるため、物理空間内の前進速度（Z方向）を現実（約0.4秒）より遅く（約0.8〜0.9秒）設定
+        const BASE_Z_SPEED = 22.0; // 秒速約22m 
+
+        function cpuPlanPitch() {
+            if (gameStatus.state !== 'WAITING') return;
+
+            // AIロジック：カウントに基づく球種選定
+            let pitchChoices = ['ストレート', 'スライダー', 'フォーク', 'カーブ'];
+            let weights = [0.4, 0.2, 0.2, 0.2];
+
+            if (gameStatus.strikes === 2) {
+                // 追い込んでいる時はフォーク（落ちる球）やスライダーの確率を大幅にアップ
+                weights = [0.2, 0.35, 0.35, 0.1];
+            } else if (gameStatus.balls === 3) {
+                // スリーボールならストライクを入れにストレートを狙う
+                weights = [0.7, 0.1, 0.1, 0.1];
+            }
+
+            // 重み付きランダム選択
+            let r = Math.random();
+            let sum = 0;
+            ball.type = 'ストレート';
+            for (let i = 0; i < pitchChoices.length; i++) {
+                sum += weights[i];
+                if (r <= sum) {
+                    ball.type = pitchChoices[i];
+                    break;
+                }
+            }
+
+            // AIによるターゲットコース決定（ストライクゾーンの中心を基準にランダムに散らす）
+            // カウントが有利ならクッキリ外角ボールゾーンを攻める
+            let targetX = (Math.random() - 0.5) * zoneWidth * 1.4;
+            let targetY = (zoneBottom + zoneHeight/2) + (Math.random() - 0.5) * zoneHeight * 1.4;
+
+            if (gameStatus.strikes === 2 && Math.random() < 0.6) {
+                // 誘い球として低めのボールゾーンに設定
+                targetY = zoneBottom - 0.1;
+            }
+
+            // 初期位置（ピッチャーリリースポイント）
+            ball.pos.set(0.2, 1.8, -PITCH_DISTANCE);
+            
+            // 初速度計算（体感速度：100km/h 〜 125km/h 程度に抑えて打ちやすく調整）
+            let duration = PITCH_DISTANCE / BASE_Z_SPEED; // 到達時間
+            ball.speedKmh = Math.floor(100 + Math.random() * 25);
+
+            // Z方向速度
+            let vz = BASE_Z_SPEED; 
+            // ターゲットに到達するための初期速度X, Y
+            let vx = (targetX - ball.pos.x) / duration;
+            let vy = (targetY - ball.pos.y) / duration;
+
+            // 重力補正を考慮した初期上向き速度
+            vy += 0.5 * 9.8 * duration;
+
+            ball.vel.set(vx, vy, vz);
+            ball.acc.set(0, -9.8, 0); // 基本は重力
+            ball.active = true;
+            ball.hasBroken = false;
+
+            // UI更新
+            document.getElementById('pitch-type').innerText = "投球中...";
+            document.getElementById('pitch-speed').innerText = "- km/h";
+            
+            ballMesh.position.copy(ball.pos);
+            ballMesh.visible = true;
+            gameStatus.state = 'PITCHING';
+        }
+
+        // 変化球の物理挙動適用
+        function updateBallPhysics(dt) {
+            if (!ball.active) return;
+
+            // マウンドとホームベースの中間付近を過ぎたら変化球のキレ（マグヌス効果）が本格化
+            if (ball.pos.z > -PITCH_DISTANCE * 0.6) {
+                if (ball.type === 'スライダー') {
+                    ball.acc.x = 4.5; // 右打者の外角へ逃げる
+                    ball.acc.y = -8.0;
+                } else if (ball.type === 'フォーク') {
+                    ball.acc.y = -22.0; // 急激な自由落下以上の沈み
+                } else if (ball.type === 'カーブ') {
+                    ball.acc.x = -3.5; // 大きく緩やかに曲がりながら落ちる
+                    ball.acc.y = -14.0;
+                } else if (ball.type === 'ストレート') {
+                    ball.acc.y = -6.0; // 抗力によるホップ成分（通常の重力より落ちない）
+                }
+            }
+
+            // 速度・位置更新
+            ball.vel.addScaledVector(ball.acc, dt);
+            ball.pos.addScaledVector(ball.vel, dt);
+            ballMesh.position.copy(ball.pos);
+
+            // キャッチャー通過・判定見逃し
+            if (ball.pos.z > 0.5) {
+                processInningsResult('LOOK');
+            }
+        }
+
+        // --- 4. 操作システム (PC・スマホ・iPad対応) ---
+        // キーボード操作 (WASD)
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.code === 'Space') executeSwing();
+        });
+        window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+
+        function handleKeyboardInput() {
+            let speed = 0.04;
+            if (keys['w'] || keys['arrowup']) cursorTargetY = Math.min(1.0, cursorTargetY + speed);
+            if (keys['s'] || keys['arrowdown']) cursorTargetY = Math.max(-1.0, cursorTargetY - speed);
+            if (keys['a'] || keys['arrowleft']) cursorTargetX = Math.max(-1.0, cursorTargetX - speed);
+            if (keys['d'] || keys['arrowright']) cursorTargetX = Math.min(1.0, cursorTargetX - speed);
+        }
+
+        // タッチ・ドラッグ操作（iPad・スマホ対応）
+        const touchZone = document.getElementById('touch-move-zone');
+        let touchStartPos = { x: 0, y: 0 };
+        let touchStartCursor = { x: 0, y: 0 };
+
+        touchZone.addEventListener('touchstart', e => {
+            const t = e.touches[0];
+            touchStartPos.x = t.clientX;
+            touchStartPos.y = t.clientY;
+            touchStartCursor.x = cursorTargetX;
+            touchStartCursor.y = cursorTargetY;
+        }, { passive: true });
+
+        touchZone.addEventListener('touchmove', e => {
+            if (!e.touches.length) return;
+            const t = e.touches[0];
+            const dx = t.clientX - touchStartPos.x;
+            const dy = t.clientY - touchStartPos.y;
+
+            // 感度調整
+            const sensitivity = 0.006;
+            cursorTargetX = Math.max(-1.0, Math.min(1.0, touchStartCursor.x + dx * sensitivity));
+            cursorTargetY = Math.max(-1.0, Math.min(1.0, touchStartCursor.y - dy * sensitivity)); // Y軸反転
+        }, { passive: true });
+
+        document.getElementById('swing-button').addEventListener('touchstart', e => {
+            e.preventDefault();
+            executeSwing();
+        });
+
+        // ミートカーソル移動の滑らかさ(線形補間)
+        function updateCursorPositions() {
+            cursorCurrentX += (cursorTargetX - cursorCurrentX) * 0.25;
+            cursorCurrentY += (cursorTargetY - cursorCurrentY) * 0.25;
+
+            // 3D空間への座標マッピング
+            let posX = cursorCurrentX * (zoneWidth * 0.9);
+            let posY = (zoneBottom + zoneHeight/2) + cursorCurrentY * (zoneHeight * 0.9);
+            cursorMesh.position.set(posX, posY, -0.28);
+        }
+
+        // --- 5. 打撃判定・ゲームロジック ---
+        let isSwinging = false;
+        let swingTimer = 0;
+
+        function executeSwing() {
+            if (gameStatus.state !== 'PITCHING' || isSwinging) return;
+            isSwinging = true;
+            swingTimer = 0;
+
+            // バットスイングの3Dアニメーション開始
+            batMesh.position.set(0.4, 0.6, -0.1);
+
+            // ジャストタイミングはボールが z = -0.28 付近を通過した瞬間
+            let timeDiff = ball.pos.z - (-0.28); 
+            let distToCursorX = Math.abs(ball.pos.x - cursorMesh.position.x);
+            let distToCursorY = Math.abs(ball.pos.y - cursorMesh.position.y);
+
+            // 判定領域の閾値
+            let timingThreshold = 0.28; // かなり甘めに設定して「体感球速低下」に合わせる
+            let contactThreshold = 0.14;
+
+            if (Math.abs(timeDiff) < timingThreshold) {
+                if (distToCursorX < contactThreshold && distToCursorY < contactThreshold) {
+                    // ミート成功：芯とのズレ具合で結果分岐
+                    let totalMiss = distToCursorX + distToCursorY;
+                    if (totalMiss < 0.05 && Math.abs(timeDiff) < 0.1) {
+                        showNotice("💥 ホームラン！！");
+                        triggerHitTrajectory(0.6, 0.4);
+                    } else if (totalMiss < 0.10) {
+                        showNotice("ヒット！");
+                        triggerHitTrajectory(0.3, 0.15);
+                    } else {
+                        showNotice("ファウル");
+                        triggerHitTrajectory(0.1, 0.5, true);
+                    }
+                } else {
+                    showNotice("空振り");
+                    recordStrike();
+                }
+            } else {
+                showNotice("空振り (タイミング不良)");
+                recordStrike();
+            }
+        }
+
+        function triggerHitTrajectory(upward, power, isFoul = false) {
+            gameStatus.state = 'HIT_FLIGHT';
+            ball.active = false;
+            
+            // 打球ベクトルの生成
+            let angleX = (cursorMesh.position.x - ball.pos.x) * 5;
+            let vz = -25.0 * power;
+            if (isFoul) {
+                angleX = Math.random() > 0.5 ? 12.0 : -12.0;
+                vz = -5.0;
+            }
+
+            ball.vel.set(angleX, 15.0 * upward, vz);
+            ball.acc.set(0, -9.8, 0);
+            ball.active = true;
+
+            setTimeout(() => {
+                ball.active = false;
+                ballMesh.visible = false;
+                if (isFoul) {
+                    recordStrike();
+                } else {
+                    gameStatus.userScore += (upward > 0.5) ? 4 : 1; // 簡易加算
+                    document.getElementById('user-score').innerText = gameStatus.userScore;
+                    clearCountKeepOuts();
+                }
+            }, 2000);
+        }
+
+        function processInningsResult(type) {
+            ball.active = false;
+            ballMesh.visible = false;
+
+            // ストライクゾーンに入っていたかどうかのインジケータ
+            let isStrikeZone = (Math.abs(ball.pos.x) < zoneWidth/2 && 
+                                ball.pos.y > zoneBottom && 
+                                ball.pos.y < (zoneBottom + zoneHeight));
+
+            if (type === 'LOOK') {
+                if (isStrikeZone) {
+                    showNotice("見逃しストライク");
+                    recordStrike();
+                } else {
+                    showNotice("ボール");
+                    recordBall();
+                }
+            }
+        }
+
+        function recordStrike() {
+            gameStatus.strikes++;
+            if (gameStatus.strikes >= 3) {
+                showNotice("三振！");
+                gameStatus.outs++;
+                clearCount();
+            }
+            updateCountDisplay();
+            nextPitchSequence();
+        }
+
+        function recordBall() {
+            gameStatus.balls++;
+            if (gameStatus.balls >= 4) {
+                showNotice("フォアボール");
+                gameStatus.userScore++;
+                document.getElementById('user-score').innerText = gameStatus.userScore;
+                clearCount();
+            }
+            updateCountDisplay();
+            nextPitchSequence();
+        }
+
+        function clearCountKeepOuts() {
+            gameStatus.strikes = 0;
+            gameStatus.balls = 0;
+            updateCountDisplay();
+            nextPitchSequence();
+        }
+
+        function clearCount() {
+            gameStatus.strikes = 0;
+            gameStatus.balls = 0;
+            if (gameStatus.outs >= 3) {
+                showNotice("ゲームセット / チェンジ");
+                gameStatus.outs = 0;
+                gameStatus.userScore = 0;
+                gameStatus.cpuScore = 0;
+                document.getElementById('user-score').innerText = 0;
+                document.getElementById('cpu-score').innerText = 0;
+            }
+        }
+
+        function updateCountDisplay() {
+            for(let i=1; i<=3; i++) {
+                let el = document.getElementById('b'+i);
+                if(el) el.className = (gameStatus.balls >= i) ? "dot b active" : "dot b";
+            }
+            for(let i=1; i<=2; i++) {
+                let el = document.getElementById('s'+i);
+                if(el) el.className = (gameStatus.strikes >= i) ? "dot s active" : "dot s";
+                let elO = document.getElementById('o'+i);
+                if(elO) elO.className = (gameStatus.outs >= i) ? "dot o active" : "dot o";
+            }
+        }
+
+        function showNotice(text) {
+            const el = document.getElementById('center-notice');
+            el.innerText = text;
+            el.style.opacity = 1;
+            setTimeout(() => { el.style.opacity = 0; }, 1200);
+        }
+
+        function nextPitchSequence() {
+            gameStatus.state = 'RESULT';
+            setTimeout(() => {
+                document.getElementById('pitch-type').innerText = ball.type;
+                document.getElementById('pitch-speed').innerText = ball.speedKmh + " km/h";
+                gameStatus.state = 'WAITING';
+                isSwinging = false;
+                batMesh.position.set(0.8, 0.6, 0.2);
+                batMesh.rotation.set(0, 0, Math.PI / 3);
+                // 次の投球へ自動ループ
+                setTimeout(cpuPlanPitch, 1500);
+            }, 1000);
+        }
+
+        // --- 6. アニメーション＆メインループ ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = clock.getDelta();
+
+            handleKeyboardInput();
+            updateCursorPositions();
+            updateBallPhysics(dt);
+
+            // バットスイングのアニメーション駆動
+            if (isSwinging) {
+                swingTimer += dt;
+                batMesh.rotation.y -= dt * 25; // 高速旋回
+                batMesh.position.x -= dt * 12;
+                if (swingTimer > 0.4) {
+                    isSwinging = false;
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // 画面リサイズ対応
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // 起動
+        setTimeout(() => {
+            cpuPlanPitch();
+            animate();
+        }, 1500);
+
+    </script>
+</body>
+</html>
